@@ -5,6 +5,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -21,11 +23,15 @@ import java.util.List;
 public class GameView extends SurfaceView {
     private GameLoopThread gameLoopThread;
     private SurfaceHolder holder;
-
+    public static int globalxSpeed = 15;
     Bitmap playerbmp;
+    Bitmap starbmp;
+
+    private List<Star> star = new ArrayList<Star>();
     private List<Player> player = new ArrayList<Player>();
 
-
+    public static int Score = 0;
+    public static int HighScore=1000;
 
     public GameView(Context context) {
         super(context);
@@ -55,8 +61,12 @@ public class GameView extends SurfaceView {
 
         });
         playerbmp = BitmapFactory.decodeResource(getResources(), R.drawable.player);
+        starbmp = BitmapFactory.decodeResource(getResources(), R.drawable.str);
+
         player.add(new Player(this,playerbmp,50,50));
-        Log.d("TEST", "gv"+player.size());
+        star.add(new Star(this,starbmp,120,500));
+        star.add(new Star(this,starbmp,50,600));
+        Log.d("TEST", "gv");
         // TODO Auto-generated constructor stub
     }
 
@@ -71,15 +81,42 @@ public class GameView extends SurfaceView {
 
     }
 
+    public void update(){
+        Score +=5;
+
+        if (Score > HighScore) {
+
+            HighScore=Score;
+        }
+    }
 
 
     @Override
     protected void onDraw(Canvas canvas) {
+        update();
         canvas.drawColor(Color.WHITE);
+
+        Paint textpaint = new Paint();
+        textpaint.setTextSize(32);
+
+        canvas.drawText("Score: " + Score, 600, 32, textpaint);
+        canvas.drawText("High Score: " + HighScore, 600, 64, textpaint);
+
         for(Player pplayer: player)
         {
             pplayer.onDraw(canvas);
             ///Log.d("TEST","confused");
+        }
+        for(int i=0; i<star.size();i++){
+
+            star.get(i).onDraw(canvas);
+            Rect playerr=player.get(0).GetBounds();
+            Rect starr = star.get(i).GetBounds();
+
+            if(star.get(i).checkCollision(playerr,starr)){
+                star.remove(i);
+                Score +=500;
+            }
         }
 
     }
