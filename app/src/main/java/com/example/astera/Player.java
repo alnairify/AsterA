@@ -3,7 +3,6 @@ package com.example.astera;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Rect;
-import android.util.Log;
 
 /**
  * Created by Eurie on 6/21/2017.
@@ -16,12 +15,16 @@ public class Player {
     static int vspeed = 1;
     static int playerheight;
     static int playerwidth;
-    static int jumppower = -10;
+    static int jumppower = -15;
     private int width;
     private int height;
+    private int currentFrame=0;
+    private int animationpos=0;
+    private int state =0;
 
-    private int columnWidth=1;
-    private int columnHeight=1;
+    private int columnWidth=4;
+    private int animationColumn=0;
+    private int columnHeight=2;
 
     Rect playerr;
     Bitmap bmp;
@@ -35,7 +38,8 @@ public class Player {
         this.y = y;
         this.gameview = gameview;
         this.bmp = bmp;
-        playerheight=bmp.getHeight();
+
+        playerheight=bmp.getHeight()/2;
 
         this.width=bmp.getWidth()/columnWidth;
         this.height=bmp.getHeight()/columnHeight;
@@ -43,26 +47,61 @@ public class Player {
     public void update(){
         checkground();
 
+        checkanimationstate();
+        switchanimations();
+
+
+    }
+
+    public void checkanimationstate(){
+        if(vspeed<0){
+            state=2;
+        }else if(vspeed>0){
+            state =1;
+        }else{
+            state=0;
+        }
+    }
+
+    public void switchanimations(){
+        if(state==0){
+            animationColumn=4;
+            animationpos=0;
+            if (currentFrame >= (animationColumn-1)) {
+                currentFrame = 0;
+            } else{
+                currentFrame += 1;
+            }
+        }else if (state==1){
+            currentFrame=0;
+            animationColumn=0;
+            animationpos=1;
+        }else if(state==2){
+            currentFrame=1;
+            animationpos=1;
+            animationColumn=0;
+        }
+
     }
 
     public void checkground(){
-        if (y < gameview.getHeight()-64-playerheight){
+        if (y < gameview.getHeight()-Ground.height-playerheight){
             vspeed+=gravity;
-            if (y > gameview.getHeight()-64-playerheight-vspeed)
+            if (y > gameview.getHeight()-Ground.height-playerheight-vspeed)
             {
-                vspeed = gameview.getHeight()-64-y-playerheight;
+                vspeed = gameview.getHeight()-Ground.height-playerheight;
             }
         }
         else if (vspeed>0)
         {
             vspeed = 0;
-            y = gameview.getHeight()-64-playerheight;
+            y = gameview.getHeight()-Ground.height-playerheight;
         }
         y += vspeed;
     }
 
     public void ontouch(){
-        if (y>= gameview.getHeight()-64-playerheight)
+        if (y>= gameview.getHeight()-Ground.height-playerheight)
         {
             vspeed = jumppower;
         }
@@ -74,10 +113,14 @@ public class Player {
     }
 
     public void onDraw(Canvas canvas){
-        Log.d("TEST", "pl");
+        //Log.d("TEST", "pl");
         update();
-        canvas.drawBitmap(bmp, x, y, null);
 
+        int srcX= (int) (currentFrame*width);
+        int srcY = animationpos*48; //1.5*sprite heigh
+        Rect src = new Rect(srcX, srcY,srcX+width,srcY+width);
+        Rect dst = new Rect(x,y,x+width,y+height);
+        canvas.drawBitmap(bmp, src,dst,null);
     }
 }
 

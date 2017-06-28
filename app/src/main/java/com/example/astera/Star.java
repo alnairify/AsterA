@@ -12,6 +12,7 @@ public class Star {
 
     private int x;
     private int y;
+    private int y2;
     private Bitmap bmp;
     private GameView gameview;
     private int xspeed=-GameView.globalxSpeed;
@@ -26,7 +27,7 @@ public class Star {
 
     public Star(GameView gameview, Bitmap bmp, int x, int y){
         this.x=x;
-        this.y=y;
+        this.y2=y;
         this.gameview=gameview;
         this.bmp=bmp;
         this.width=bmp.getWidth()/columnWidth;
@@ -36,17 +37,19 @@ public class Star {
     public void update() {
 
         x += xspeed;
+        y=gameview.getHeight()-y2-Ground.height-bmp.getHeight();
         if (currentFrame >= columnWidth - 1) {
             currentFrame = 0;
         } else{
             currentFrame += 1;
         }
 
-        if(x<0){
-            x=gameview.getWidth()+width;
-        }
 
         //currentFrame+=1%(columnWidth-1);
+    }
+
+    public int returnX(){
+        return x;
     }
 
     public Rect GetBounds(){
