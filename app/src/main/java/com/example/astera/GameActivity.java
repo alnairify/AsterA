@@ -10,9 +10,12 @@ public class GameActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         Log.d("TEST", "ga");
+
         gameView=new GameView(this);
         setContentView(gameView); /*Sets the displaycontent to our new object GameView*/
+
     }
 
     @Override

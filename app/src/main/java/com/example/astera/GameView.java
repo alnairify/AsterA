@@ -7,11 +7,14 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Rect;
+import android.view.Display;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
+import android.view.WindowManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +28,7 @@ public class GameView extends SurfaceView {
     GameLoopThread gameLoopThread;
     SurfaceHolder holder;
 
+
     public static int globalxSpeed = 8;
 
     Bitmap playerbmp;
@@ -32,18 +36,23 @@ public class GameView extends SurfaceView {
     Bitmap gbmp;
     Bitmap spikesbmp;
     Bitmap pbmp;
+    Bitmap platbmp;
     int xx=0;
 
     private List<Star> star = new ArrayList<Star>();
     private List<Player> player = new ArrayList<Player>();
     private List<Ground> ground = new ArrayList<Ground>();
     private List<Spikes> spikes = new ArrayList<Spikes>();
+    private List<Platform> platform = new ArrayList<Platform>();
     private List<Powerup> pu = new ArrayList<Powerup>();
 
     public static int Score = 0;
     public static int HighScore=0;
     public static int achievementScore10000=0; //false
     private int lastscore=0;
+
+    public static final int WIDTH = 247;
+    public static final int HEIGHT = 106;
 
     private String saveAchievementScore10000 = "Achievement: scored 10000";
 
@@ -59,12 +68,26 @@ public class GameView extends SurfaceView {
     private int timerStars = 0;
     private int timerSpikes =0;
     private int timerRandomSpikes=1;
+    private int timerplat=0;
+    private int timerrandplat=0;
+
     private String saveScore = "Highscore";
     private String Menu="Running";
+
+
+    int MAXX;
+    int MAXY;
 
     public GameView(Context context) {
         super(context);
         prefs=context.getSharedPreferences("com.example.AsterA",context.MODE_PRIVATE);
+
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        Display display = wm.getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        MAXX = size.x;
+        MAXY = size.y;
 
         String spackage = "com.example.AsterA";
 
@@ -87,6 +110,8 @@ public class GameView extends SurfaceView {
 
             public void surfaceCreated(SurfaceHolder arg0) {
                 // TODO Auto-generated method stub
+                //timerplat = System.currentTimeMillis();
+                //lastplatheight = 100;
                 gameLoopThread.setRunning(true);
                 gameLoopThread.start();
 
@@ -104,13 +129,25 @@ public class GameView extends SurfaceView {
         gbmp = BitmapFactory.decodeResource(getResources(), R.drawable.g);
         spikesbmp=BitmapFactory.decodeResource(getResources(),R.drawable.spikes);
         pbmp=BitmapFactory.decodeResource(getResources(),R.drawable.pu);
+        platbmp = BitmapFactory.decodeResource(getResources(),R.drawable.g);
 
         player.add(new Player(this,playerbmp,50,50));
         pu.add(new Powerup(this,pbmp,600,32));
-        spikes.add(new Spikes(this,spikesbmp, 400,0));
-        spikes.add(new Spikes(this,spikesbmp, 800,0));
         star.add(new Star(this,starbmp,120,50));
         star.add(new Star(this,starbmp,50,50));
+        platform.add(new Platform(this, platbmp, 500, MAXY -175));
+        platform.add(new Platform(this, platbmp, 532, MAXY-200));
+        platform.add(new Platform(this, platbmp, 564, MAXY-200));
+        platform.add(new Platform(this, platbmp, 596, MAXY-200));
+        platform.add(new Platform(this, platbmp, 620, MAXY-200));
+        platform.add(new Platform(this, platbmp, 654, MAXY-200));
+        platform.add(new Platform(this, platbmp, 700, MAXY-200));
+        platform.add(new Platform(this, platbmp, 754, MAXY-200));
+        platform.add(new Platform(this, platbmp, 800, MAXY-200));
+        platform.add(new Platform(this, platbmp, 1000, MAXY -275));
+        platform.add(new Platform(this, platbmp, 1032, MAXY -275));
+        platform.add(new Platform(this, platbmp, 1064, MAXY -275));
+
         //Log.d("TEST", "gv");
         // TODO Auto-generated constructor stub
     }
@@ -146,6 +183,65 @@ public class GameView extends SurfaceView {
 
                 HighScore = Score;
             }
+
+            /*Random randomplat = new Random();
+            int rp;
+            rp = randomplat.nextInt(3);
+
+            long platformElapsed = (System.nanoTime() - timerplat) / 1000000;
+            if (platformElapsed > 700) {
+                //add platforms
+                if (platform.size() == 0) {
+                    //new Star(this, starbmp, this.getWidth() + 32, 32
+                    platform.add(new Platform(this, platbmp, WIDTH - 300, lastplatheight));
+                } else {
+                    //platform from a certain distance so the person can jump
+                    //but also have the possibility to miss
+                    if (rp>1) {
+                        if (lastplatheight == 100) {
+                            lastplatheight = lastplatheight- 10;
+                            platform.add(new Platform(this, platbmp, WIDTH, lastplatheight));
+
+                        } else {
+                            lastplatheight= lastplatheight + 10;
+                            platform.add(new Platform(this, platbmp, WIDTH, lastplatheight));
+
+                        }
+                    } else {
+                        if (lastplatheight == 10) {
+                            lastplatheight= lastplatheight+ 10;
+                            platform.add(new Platform(this, platbmp, WIDTH, lastplatheight));
+
+                        } else {
+                            lastplatheight = lastplatheight - 10;
+                            platform.add(new Platform(this, platbmp, WIDTH, lastplatheight));
+
+                        }
+                    }
+                }
+                timerplat = System.nanoTime();
+            }
+
+            for (int i = 0; i < platform.size(); i++) {
+                Rect playerr = player.get(0).GetBounds();
+                Rect platr = platform.get(i).GetBounds();
+                //update platform
+                platform.get(i).update();
+
+                if (platform.get(i).returnX() < -1000) {
+                    platform.remove(i);
+                    break;
+                }
+
+                //star.get(i).checkCollision(playerr, starr)
+                //add collision check
+                if (platform.get(i).checkCollision(playerr,platr)){
+                    player.get(0).vspeed=0;
+                }else{
+                    player.get(0).vspeed=1;
+                }
+
+            }*/
         }
     }
 
@@ -153,6 +249,7 @@ public class GameView extends SurfaceView {
         timerStars++;
         timerSpikes++;
         timerShield++;
+        timerplat++;
 
         if(Menu=="Running"){
         if(shielded){
@@ -190,6 +287,106 @@ public class GameView extends SurfaceView {
 
         }
 
+            switch(timerrandplat){
+                case 0:
+                    if(timerplat>=75){
+
+                        platform.add(new Platform(this, platbmp, this.getWidth()+50, MAXY -200));
+                        platform.add(new Platform(this, platbmp, this.getWidth()+100, MAXY -200));
+                        platform.add(new Platform(this, platbmp, this.getWidth()+200, MAXY -300));
+                        platform.add(new Platform(this, platbmp, this.getWidth()+250, MAXY -300));
+                        platform.add(new Platform(this, platbmp, this.getWidth()+350, MAXY -200));
+                        platform.add(new Platform(this, platbmp, this.getWidth()+400, MAXY -200));
+                        Random randomplat=new Random();
+                        timerrandplat = randomplat.nextInt(3);
+                        timerplat=0;
+                    }
+                    break;
+                case 1:
+                    if(timerplat>=125){
+                        platform.add(new Platform(this, platbmp, this.getWidth()+50, MAXY -200));
+                        platform.add(new Platform(this, platbmp, this.getWidth()+100, MAXY -200));
+                        platform.add(new Platform(this, platbmp, this.getWidth()+150, MAXY -200));
+                        Random randomplat=new Random();
+                        timerrandplat = randomplat.nextInt(3);
+                        timerplat=0;
+                    }break;
+                case 2:
+                    if(timerplat>=100){
+                        platform.add(new Platform(this, platbmp, this.getWidth()+50, MAXY -200));
+                        platform.add(new Platform(this, platbmp, this.getWidth()+100, MAXY -200));
+                        platform.add(new Platform(this, platbmp, this.getWidth()+150, MAXY -200));
+                        platform.add(new Platform(this, platbmp, this.getWidth()+250, MAXY -200));
+                        platform.add(new Platform(this, platbmp, this.getWidth()+300, MAXY -200));
+                        platform.add(new Platform(this, platbmp, this.getWidth()+350, MAXY -200));
+                        Random randomplat=new Random();
+                        timerrandplat = randomplat.nextInt(3);
+                        timerplat=0;
+                    }break;
+
+
+
+
+            }
+
+           /* Random randomplat = new Random();
+            int rp;
+            rp = randomplat.nextInt(3);
+
+            long platformElapsed = (System.nanoTime() - timerplat) / 1000000;
+            if (platformElapsed > 700) {
+                //add platforms
+                if (platform.size() == 0) {
+                    //new Star(this, starbmp, this.getWidth() + 32, 32
+                    platform.add(new Platform(this, platbmp, WIDTH - 300, lastplatheight));
+                } else {
+                    //platform from a certain distance so the person can jump
+                    //but also have the possibility to miss
+                    if (rp>1) {
+                        if (lastplatheight == 100) {
+                            lastplatheight = lastplatheight- 10;
+                            platform.add(new Platform(this, platbmp, WIDTH, lastplatheight));
+
+                        } else {
+                            lastplatheight= lastplatheight + 10;
+                            platform.add(new Platform(this, platbmp, WIDTH, lastplatheight));
+
+                        }
+                    } else {
+                        if (lastplatheight == 10) {
+                            lastplatheight= lastplatheight+ 10;
+                            platform.add(new Platform(this, platbmp, WIDTH, lastplatheight));
+
+                        } else {
+                            lastplatheight = lastplatheight - 10;
+                            platform.add(new Platform(this, platbmp, WIDTH, lastplatheight));
+
+                        }
+                    }
+                }
+                timerplat = System.nanoTime();
+            }
+
+            for (int i = 0; i < platform.size(); i++) {
+                Rect playerr = player.get(0).GetBounds();
+                Rect platr = platform.get(i).GetBounds();
+                //update platform
+                platform.get(i).update();
+
+                if (platform.get(i).returnX() < -1000) {
+                    platform.remove(i);
+                    break;
+                }
+
+                //star.get(i).checkCollision(playerr, starr)
+                //add collision check
+                if (platform.get(i).checkCollision(playerr,platr)){
+                    player.get(0).vspeed=0;
+                }else{
+                    player.get(0).vspeed=1;
+                }
+
+            }*/
 
 
         switch(timerRandomSpikes){
@@ -301,6 +498,11 @@ public class GameView extends SurfaceView {
         for(int i=0;i<pu.size();i++){
             pu.remove(i);
         }
+        for(int i=0;i<platform.size();i++){
+            platform.remove(i);
+        }
+
+
         player.remove(0);
     }
 
@@ -310,7 +512,8 @@ public class GameView extends SurfaceView {
 
     @Override
     protected void onDraw(Canvas canvas) {
-
+        //Button pbutton = (Button) findViewById(R.id.pause);
+        //add(pbutton);
         update();
         canvas.drawColor(Color.WHITE);
         if(Menu=="Running") {
@@ -318,7 +521,9 @@ public class GameView extends SurfaceView {
             Paint textpaint = new Paint();
             textpaint.setTextSize(32);
 
+
             canvas.drawText("Score: " + Score, 600, 32, textpaint);
+
             canvas.drawText("High Score: " + HighScore, 600, 64, textpaint);
             canvas.drawText("Stars: " + Starscollected, 600, 96, textpaint);
             if (achievementScore10000 == 0) {
@@ -378,6 +583,32 @@ public class GameView extends SurfaceView {
                 }
             }
 
+            for (int i = 0; i < platform.size(); i++) {
+                platform.get(i).onDraw(canvas);
+
+                Rect platr = platform.get(i).GetBounds();
+
+                Rect playerr = new Rect();
+                if(Menu!="Mainmenu"){
+                    playerr = player.get(0).GetBounds();
+                }
+
+                //update platform
+
+                if (platform.get(i).returnX() < -32) {
+                    platform.remove(i);
+                }else
+
+                //star.get(i).checkCollision(playerr, starr)
+                //add collision check
+                if (platform.get(i).checkCollision(playerr, platr)) {
+                    player.get(0).setY(platform.get(i).returnY()-platbmp.getHeight());
+                    player.get(0).vspeed=0;
+                    player.get(0).onPlat=true;
+                } /*else {
+                    player.get(0).vspeed = 1;
+                }*/
+            }
 
             for (int i = 0; i < pu.size(); i++) {
 
@@ -395,6 +626,8 @@ public class GameView extends SurfaceView {
 
                 }
             }
+
+
 
         }
 

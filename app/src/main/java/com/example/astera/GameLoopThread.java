@@ -10,7 +10,7 @@ import android.graphics.Canvas;
 public class GameLoopThread extends Thread{
     private GameView view;
     // desired fps
-    private final static int 	MAX_FPS = 20;
+    private final static int 	MAX_FPS = 30;
     // maximum number of frames to be skipped
     private final static int	MAX_FRAME_SKIPS = 5;
     // the frame period

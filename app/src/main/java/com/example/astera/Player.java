@@ -26,6 +26,8 @@ public class Player {
     private int animationColumn=0;
     private int columnHeight=2;
 
+    boolean onPlat= false;
+
     Rect playerr;
     Bitmap bmp;
     GameView gameview;
@@ -100,11 +102,17 @@ public class Player {
         y += vspeed;
     }
 
+    public void setY(int y){
+        this.y=y;
+    }
+
     public void ontouch(){
-        if (y>= gameview.getHeight()-Ground.height-playerheight)
+        if (y>= gameview.getHeight()-Ground.height-playerheight || onPlat)
         {
             vspeed = jumppower;
+            onPlat=false;
         }
+
     }
 
 
